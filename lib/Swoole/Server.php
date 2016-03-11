@@ -3,6 +3,8 @@
 namespace Swoole;
 
 abstract class Server implements Server\Driver {
+    public $protocol;
+    public $config = array ();
     protected $sw;
     protected $processName = 'swooleServ';
     protected $host = '0.0.0.0';
@@ -12,21 +14,14 @@ abstract class Server implements Server\Driver {
     protected $sockType;
     protected $udpListener;
     protected $tcpListener;
-    public $config = array ();
     protected $setting = array ();
     protected $runPath = '/tmp';
     protected $masterPidFile;
     protected $managerPidFile;
     protected $user;
     protected $enableHttp = false;
-    // private $protocol;
-    private $preSysCmd = '%+-swoole%+-';
     private $requireFile = '';
-    
-    // public $serverClass; //修改为public ---mark 20150620
-    public $protocol; // 修改为public ---mark 20150620
     function __construct() {
-        // Initialization server startup parameters
         $this->setting = array_merge ( array (
                 'worker_num' => 8, // worker process num
                 'backlog' => 128, // listen backlog
@@ -35,9 +30,6 @@ abstract class Server implements Server\Driver {
 $this->setting );
         
         $this->setHost ();
-        $this->init ();
-    }
-    public function init() {
     }
     public function setRequire($file) {
         if (! file_exists ( $file )) {
@@ -48,7 +40,7 @@ $this->setting );
     public function setProcessName($processName) {
         $this->processName = $processName;
     }
-    public function loadConfig($config = array()) {
+    public function setConfig($config = array()) {
         if (is_string ( $config )) { // $config is file path?
             if (! file_exists ( $config )) {
                 throw new \Exception ( "[error] profiles [$config] can not be loaded" );
@@ -59,23 +51,24 @@ $this->setting );
         if (is_array ( $config )) {
             $this->config = array_merge ( $this->config, $config );
         }
+        
         return true;
     }
     protected function _initRunTime() {
         $mainSetting = $this->config ['server'] ? $this->config ['server'] : array ();
         $runSetting = $this->config ['setting'] ? $this->config ['setting'] : array ();
-        // $this->processName = $mainSetting['server_name'] ? $mainSetting['server_name'] : 'swoole_server'; //todo
         $this->masterPidFile = $this->runPath . '/' . $this->processName . '.master.pid';
         $this->managerPidFile = $this->runPath . '/' . $this->processName . '.manager.pid';
         $this->setting = array_merge ( $this->setting, $runSetting );
-        // $this->serverClass = $mainSetting['server_name'] ? $mainSetting['server_name'] : 'swoole_server'; //todo
+        $this->setting ['worker_num'] = intval ( $this->setting ['worker_num'] );
+        $this->setting ['dispatch_mode'] = intval ( $this->setting ['dispatch_mode'] );
+        $this->setting ['daemonize'] = intval ( $this->setting ['daemonize'] );
         
-        // trans listener
+        // 设置监听的端口
         if ($mainSetting ['listen']) {
             $this->transListener ( $mainSetting ['listen'] );
         }
         
-        // set user
         if (isset ( $mainSetting ['user'] )) {
             $this->user = $mainSetting ['user'];
         }
@@ -87,14 +80,8 @@ $this->setting );
         }
     }
     private function initServer() {
-        // Creating a swoole server resource object
         $swooleServerName = $this->enableHttp ? '\swoole_http_server' : '\swoole_server';
         $this->sw = new $swooleServerName ( $this->host, $this->port, $this->mode, $this->sockType );
-        // 一个临时的兼容
-        $this->setting ['worker_num'] = intval ( $this->setting ['worker_num'] );
-        $this->setting ['dispatch_mode'] = intval ( $this->setting ['dispatch_mode'] );
-        $this->setting ['daemonize'] = intval ( $this->setting ['daemonize'] );
-        
         $this->sw->set ( $this->setting );
         
         $this->sw->on ( 'Start', array (
@@ -171,6 +158,11 @@ $this->setting );
             $this->transListener ( $v );
         }
     }
+    /**
+     * 主进行启动
+     *
+     * @param unknown $server            
+     */
     public function onMasterStart($server) {
         Console::setProcessName ( $this->processName . ': master process' );
         
@@ -181,12 +173,25 @@ $this->setting );
             Console::changeUser ( $this->user );
         }
     }
+    
+    /**
+     * 管理进程启动
+     *
+     * @param unknown $server            
+     */
     public function onManagerStart($server) {
         Console::setProcessName ( $this->processName . ': manager process' );
         if ($this->user) {
             Console::changeUser ( $this->user );
         }
     }
+    /**
+     * worker进程启动
+     *
+     * @param unknown $server            
+     * @param unknown $workerId            
+     * @throws \Exception
+     */
     public function onWorkerStart($server, $workerId) {
         if ($workerId >= $this->setting ['worker_num']) {
             Console::setProcessName ( $this->processName . ': task worker process' );
@@ -197,11 +202,11 @@ $this->setting );
         if ($this->user) {
             Console::changeUser ( $this->user );
         }
+        // 执行框架的载入文件
         $protocol = (require_once $this->requireFile); // 执行
         
         $this->log ( $this->requireFile );
         $this->setProtocol ( $protocol );
-        // check protocol class
         if (! $this->protocol) {
             throw new \Exception ( "[error] the protocol class  is empty or undefined" );
         }
@@ -237,20 +242,7 @@ $this->setting );
         $this->protocol->onRequest ( $request, $response );
     }
     public function onReceive($server, $fd, $fromId, $data) {
-        if ($data == $this->preSysCmd . "reload") {
-            $ret = intval ( $server->reload () );
-            $server->send ( $fd, $ret );
-        } elseif ($data == $this->preSysCmd . "info") {
-            $info = $server->connection_info ( $fd );
-            $server->send ( $fd, 'Info: ' . var_export ( $info, true ) . PHP_EOL );
-        } elseif ($data == $this->preSysCmd . "stats") {
-            $serv_stats = $server->stats ();
-            $server->send ( $fd, 'Stats: ' . var_export ( $serv_stats, true ) . PHP_EOL );
-        } elseif ($data == $this->preSysCmd . "shutdown") {
-            $server->shutdown ();
-        } else {
-            $this->protocol->onReceive ( $server, $fd, $fromId, $data );
-        }
+        $this->protocol->onReceive ( $server, $fd, $fromId, $data );
     }
     public function setProtocol($protocol) {
         if (! ($protocol instanceof \Swoole\Server\Protocol)) {
@@ -259,13 +251,18 @@ $this->setting );
         $this->protocol = $protocol;
         $this->protocol->server = $this->sw;
     }
-    public function run($setting = array()) {
-        echo __METHOD__ . PHP_EOL;
-        $this->setting = array_merge ( $this->setting, $setting );
-        $this->_initRunTime (); // 初始化server资源
-                                
-        // start
+    /**
+     *
+     * {@inheritDoc}
+     *
+     * @see \Swoole\Server\Driver::run()
+     */
+    public function run() {
+        // 初始化server配置资源
+        $this->_initRunTime ();
+        // 创建一个server,并设置回调函数
         $this->initServer ();
+        // 起飞!
         $this->start ();
     }
     protected function start() {

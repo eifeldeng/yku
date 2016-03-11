@@ -12,7 +12,7 @@ if ($cmd == 'list') {
     $configDir = STARTBASEPATH . "/conf/*.ini";
     $configArr = glob ( $configDir );
     // 配置名必须是servername
-    $servArr = array ();
+    $servArr = array (); 
     echo "your server list：" . PHP_EOL;
     
     echo '----------------------------' . PHP_EOL;
@@ -43,7 +43,7 @@ if ($cmd == 'list') {
         echo "\033[31;40m [FAIL] \033[0m server $name phpstartpath $phpStart not exist " . PHP_EOL;
         exit ();
     }
-    // 先处理单个 注意异常处理的情况
+    //调用start.php 启动相应的server
     $process = new swoole_process ( function (swoole_process $worker) use($name, $cmd, $phpStart) { // 目前指支持一个
         $worker->exec ( $phpStart, array (
                 STARTBASEPATH . "/lib/Swoole/shell/start.php",

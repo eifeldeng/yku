@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by PhpStorm, defined by wallyzhang.
- * User: markyuan
- * Date: 14-7-16
- * Time: 下午10:23
- * Version: 1.0
- */
 
 class MPConst {
 

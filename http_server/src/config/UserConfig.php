@@ -28,7 +28,6 @@ class UserConfig {
                     'error' => 1 
             ) 
     ); // fliter之后做的事情 传递一个函数？
-
     public static function getConfig($val) {
         return self::$UserConf [$val];
     }
