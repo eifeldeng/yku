@@ -18,8 +18,10 @@ if (! $cmd || ! $name) {
     exit ();
 }
 // 读取配置文件 然后启动对应的server
-$configPath = (dirname ( dirname ( SWOOLEBASEPATH ) )) . '/conf/' . $name . '.ini'; 
-                                                                                    
+$configPath = (dirname ( dirname ( SWOOLEBASEPATH ) )) . '/conf/' . $name . '.ini';
+define ( 'SERVER_NAME', $name );
+define ( 'SERVER_INI', $configPath );
+
 if (! file_exists ( $configPath )) {
     throw new \Exception ( "[error] profiles [$configPath] can not be loaded" );
 }
@@ -28,12 +30,13 @@ $config = parse_ini_file ( $configPath, true );
 // 根据config里面的不同内容启动不同的server 定义网络层 UDP、TCP
 if ($config ['server'] ['type'] == 'http') { //
     $server = new \Swoole\Network\HttpServer ();
+    $server->init ();
 } elseif ($config ['server'] ['type'] == 'tcp') {
     $server = new \Swoole\Network\TcpServer ();
 } elseif ($config ['server'] ['type'] == 'udp') {
     $server = new \Swoole\Network\UdpServer ();
 }
-//配置文件
+// 配置文件
 $server->setConfig ( $config );
 // 设置线程名称
 $server->setProcessName ( $name );

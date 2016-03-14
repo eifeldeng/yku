@@ -10,19 +10,19 @@ class UserConfig {
                             'warning' => 1,
                             'notice' => 1,
                             'error' => 1,
-                            'debug' => 1 
+                            'debug' => 1,
+                            'fatal' => 1 
                     ) 
-            ), // 支持log不同级别
+            ),
             
             'router' => array (
                     'info' => 1,
                     'error' => 1 
-            ), // 支持自定义route 传递一个函数 1111111？
+            ),
             'preFilter' => array (
                     'info' => 1,
                     'error' => 1 
             ),
-            // fliter之前做的事情 传递一个函数？
             'postFilter' => array (
                     'info' => 1,
                     'error' => 1 

@@ -166,7 +166,6 @@ $this->setting );
     public function onMasterStart($server) {
         Console::setProcessName ( $this->processName . ': master process' );
         
-        $this->log ( $this->processName );
         file_put_contents ( $this->masterPidFile, $server->master_pid );
         file_put_contents ( $this->managerPidFile, $server->manager_pid );
         if ($this->user) {
@@ -202,15 +201,16 @@ $this->setting );
         if ($this->user) {
             Console::changeUser ( $this->user );
         }
-        // 执行框架的载入文件
+        // 执行框架的载入文件,http_server/src/index.php
+        //返回一个YKUHttpServ,或者TCPserver
         $protocol = (require_once $this->requireFile); // 执行
         
-        $this->log ( $this->requireFile );
         $this->setProtocol ( $protocol );
         if (! $this->protocol) {
             throw new \Exception ( "[error] the protocol class  is empty or undefined" );
         }
         
+        //为server创建一个调度器
         $this->protocol->onStart ( $server, $workerId );
     }
     public function onConnect($server, $fd, $fromId) {
@@ -233,11 +233,6 @@ $this->setting );
         $this->protocol->onTimer ( $server, $interval );
     }
     public function onRequest($request, $response) {
-        /*
-         * 设定一个全局的协程调度对象
-         */
-        $this->log ( $request );
-        $this->log ( $this->sw );
         $request->scheduler = $this->sw->scheduler;
         $this->protocol->onRequest ( $request, $response );
     }
@@ -313,7 +308,7 @@ $this->setting );
         if (is_string ( $msg ) == false) {
             $msg = print_r ( $msg, true );
         }
-        
+        $msg = "[" . date ( "Y-m-d H:i:s" ) . "] " . $msg;
         if ($this->sw->setting ['log_file'] && file_exists ( $this->sw->setting ['log_file'] )) {
             error_log ( $msg . PHP_EOL, 3, $this->sw->setting ['log_file'] );
         }
