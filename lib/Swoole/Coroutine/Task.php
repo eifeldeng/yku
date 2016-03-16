@@ -17,7 +17,7 @@ class Task {
     
     /**
      * [__construct 构造函数，生成器+taskId, taskId由 scheduler管理]
-     * 
+     *
      * @param Generator $coroutine
      *            [description]
      * @param [type] $task
@@ -31,7 +31,7 @@ class Task {
     
     /**
      * [getTaskId 获取task id]
-     * 
+     *
      * @return [type] [description]
      */
     public function getTaskId() {
@@ -40,7 +40,7 @@ class Task {
     
     /**
      * [setException 设置异常处理]
-     * 
+     *
      * @param [type] $exception
      *            [description]
      */
@@ -50,36 +50,28 @@ class Task {
     
     /**
      * [run 协程调度]
-     * 
+     *
      * @param Generator $gen
      *            [description]
      * @return [type] [description]
      */
     public function run(\Generator $gen) {
         while ( true ) {
-            
             try {
-                
-                /*
-                 * 异常处理
-                 */
                 if ($this->exception) {
-                    
                     $gen->throw ( $this->exception );
                     $this->exception = null;
                     continue;
                 }
                 
                 $value = $gen->current ();
-                \SysLog::info ( __METHOD__ . " value === " . print_r ( $value, true ), __CLASS__ );
                 
                 /*
-                 * 中断内嵌 继续入栈
+                 * 如果当前还是一个迭代器 继续入栈
                  */
                 if ($value instanceof \Generator) {
                     
                     $this->corStack->push ( $gen );
-                    \SysLog::info ( __METHOD__ . " corStack push ", __CLASS__ );
                     $gen = $value;
                     continue;
                 }
@@ -89,17 +81,13 @@ class Task {
                  */
                 if (is_null ( $value ) && ! $this->corStack->isEmpty ()) {
                     
-                    \SysLog::info ( __METHOD__ . " values is null stack pop and send", __CLASS__ );
                     $gen = $this->corStack->pop ();
                     $gen->send ( $this->callbackData );
                     continue;
                 }
                 
                 if ($value instanceof Swoole\Coroutine\RetVal) {
-                    
-                    // end yeild
-                    \SysLog::info ( __METHOD__ . " yield end words == " . print_r ( $value, true ), __CLASS__ );
-                    return false;
+                    return;
                 }
                 
                 /*
@@ -122,16 +110,10 @@ class Task {
                 if ($this->corStack->isEmpty ()) {
                     return;
                 }
-                \SysLog::info ( __METHOD__ . " corStack pop ", __CLASS__ );
                 $gen = $this->corStack->pop ();
                 $gen->send ( $value );
             } catch ( \Exception $e ) {
-                
                 if ($this->corStack->isEmpty ()) {
-                    
-                    /*
-                     * throw the exception
-                     */
                     \SysLog::error ( __METHOD__ . " exception ===" . $e->getMessage (), __CLASS__ );
                     return;
                 }
@@ -141,7 +123,7 @@ class Task {
     
     /**
      * [callback description]
-     * 
+     *
      * @param [type] $r
      *            [description]
      * @param [type] $key
@@ -164,7 +146,6 @@ class Task {
                 'data' => $res 
         );
         
-        \SysLog::info ( __METHOD__ . " corStack pop and data == " . print_r ( $this->callbackData, true ), __CLASS__ );
         $value = $gen->send ( $this->callbackData );
         
         $this->run ( $gen );
@@ -172,7 +153,7 @@ class Task {
     
     /**
      * [isFinished 判断该task是否完成]
-     * 
+     *
      * @return boolean [description]
      */
     public function isFinished() {
