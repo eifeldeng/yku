@@ -3,6 +3,7 @@
 // 用来配置用户自定义的路由规则 以及一些log级别等
 class UserConfig {
     public static $UserConf = array (
+            
             'log' => array (
                     'log_path' => '/opt/log/',
                     'log_level' => array (

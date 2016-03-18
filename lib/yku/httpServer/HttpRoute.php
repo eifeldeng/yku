@@ -1,11 +1,21 @@
 <?php
 class HttpRoute extends Route {
-    public static function getRoute($uri, $verb = null) {
-        return array (
-                'r' => 0,
-                'controller' => 'Mark',
-                'action' => 'Marktest' 
-        );
+    /**
+     * 路由管理
+     *
+     * @param string $uri            
+     * @param array $appRoute            
+     */
+    public static function getRoute(string $uri, array &$appRoute) {
+        $mvcArr = explode ( '/', $uri );
+        if (isset ( $mvcArr [3] ) && $mvcArr [3] != '') {
+            $appRoute ['module'] = isset ( $mvcArr [1] ) ? $mvcArr [1] : 'default';
+            $appRoute ['controller'] = isset ( $mvcArr [2] ) ? $mvcArr [2] : 'default';
+            $appRoute ['action'] = isset ( $mvcArr [3] ) ? $mvcArr [3] : 'index';
+        } else {
+            $appRoute ['controller'] = isset ( $mvcArr [1] ) ? $mvcArr [1] : 'default';
+            $appRoute ['action'] = isset ( $mvcArr [2] ) ? $mvcArr [2] : 'index';
+        }
     }
     public static function urlrouter_rewrite(&$uri, $verb = null) {
         // 读取配置文件
@@ -67,29 +77,6 @@ class HttpRoute extends Route {
                 } else {
                     $mvc ['get'] = $rule ['default'];
                 }
-                // 合并默认参数------------》以后面一个为准
-                // if(empty($tmpGet)){
-                // if(empty($rule['default'])){ //如果default也是空 那么就不管了
-                //
-                // }else{
-                // $mvc['get']=$rule['default'];
-                // }
-                // }else {
-                // if(empty($rule['default'])){ //如果default也是空 那么就不管了
-                // $mvc['get']=$tmpGet;
-                // }else{
-                // $mvc['get']=array_merge($rule['default'],$tmpGet); //以tmpGet去覆盖default
-                // }
-                // }
-                // $tmpGet=array();
-                // if(!empty($rule['default'])){
-                // $tmpGet=$rule['default'];
-                // };
-                // if(!empty($rule['default']))
-                // $mvc['get']=array_merge($rule['default'],$mvc['get']);
-                // echo 'begin test data* after merge******************'.PHP_EOL;
-                // var_dump($mvc['get']);
-                // $_GET=array_merge($rule['default'],$_GET);
                 
                 return $mvc;
             }

@@ -22,22 +22,21 @@ class HttpHelper {
         // explode 解析类似于 controller/action类型的url
         
         // 默认会解析到default/index
-        $mvcArr = explode ( '/', $uri );
-        $appRoute ['controller'] = isset ( $mvcArr [1] ) ? $mvcArr [1] : 'default';
-        $appRoute ['action'] = isset ( $mvcArr [2] ) ? $mvcArr [2] : 'index';
-        SysLog::debug ( 'approute', __METHOD__ . print_r ( $appRoute, true ) );
-        if (! $appRoute) {
-            return array (
-                    'r' => self::HTTP_ERROR_URI 
-            );
-        }
+        
+        
+        $appRoute = array (
+                'module' => '',
+                'controller' => '',
+                'action' => '' 
+        );
+       HttpRoute::getRoute($uri, $appRoute);
         return array (
                 'r' => self::HTTP_OK,
                 'route' => $appRoute,
                 'request' => array (
                         'uri' => $uri,
                         'header' => $req->header,
-                        'get' => isset ( $req->get ) ? $req->get : $appRoute ['get'],
+                        'get' => isset ( $req->get ) ? $req->get :'',
                         'post' => (isset ( $req->post )) ? $req->post : '',
                         'files' => isset ( $req->files ) ? $req->files : '',
                         'cookie' => isset ( $req->cookie ) ? $req->cookie : '',

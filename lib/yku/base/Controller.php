@@ -8,7 +8,7 @@ class Controller {
     
     /**
      * 为了兼容，fd可以不传
-     * 
+     *
      * @param [type] $pbData
      *            [description]
      */

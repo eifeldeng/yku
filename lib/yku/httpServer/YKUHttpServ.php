@@ -6,7 +6,6 @@ class YKUHttpServ extends Swoole\Network\Protocol\BaseServer {
         $req = HttpHelper::httpReqHandle ( $request );
         if ($req ['r'] === HttpHelper::HTTP_ERROR_URI) {
             $response->status ( 404 );
-            // todo:log
             $response->end ( "not found" );
             return;
         }
@@ -14,10 +13,9 @@ class YKUHttpServ extends Swoole\Network\Protocol\BaseServer {
         $class = $req ['route'] ['controller'] . 'Controller';
         $fun = 'action' . $req ['route'] ['action'];
         // 判断类是否存在
-        if (! class_exists ( $class ) || ! method_exists ( ($class), ($fun) )) {
+        if (! class_exists ( $class ) || ! method_exists ( ($class), ($fun) )) { 
             $response->status ( 404 );
-            SysLog::error ( __METHOD__ . " class or fun not found class == $class fun == $fun", __CLASS__ );
-            $response->end ( "uri not found" );
+            $response->end ( "uri not found!" );
             return;
         }
         
@@ -25,18 +23,16 @@ class YKUHttpServ extends Swoole\Network\Protocol\BaseServer {
                 'request' => $req ['request'],
                 'response' => $response 
         ), $request->fd );
-        // 代入参数
-        $request->scheduler->newTask ( $obj->$fun () );
-        $request->scheduler->run ();
+        $obj->$fun ();
     }
     
     /**
-     * [onStart 协程调度器单例模式]
      *
-     * @return [type] [description]
+     * {@inheritDoc}
+     *
+     * @see \Swoole\Network\Protocol\BaseServer::onStart()
      */
     public function onStart($server, $workerId) {
-        $scheduler = new \Swoole\Coroutine\Scheduler ();
-        $server->scheduler = $scheduler;
+        return;
     }
 }

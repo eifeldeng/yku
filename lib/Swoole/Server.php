@@ -233,7 +233,6 @@ $this->setting );
         $this->protocol->onTimer ( $server, $interval );
     }
     public function onRequest($request, $response) {
-        $request->scheduler = $this->sw->scheduler;
         $this->protocol->onRequest ( $request, $response );
     }
     public function onReceive($server, $fd, $fromId, $data) {

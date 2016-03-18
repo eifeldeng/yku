@@ -15,6 +15,9 @@ class AutoLoad {
         $className = strtr ( $className, '\\', DIRECTORY_SEPARATOR );
         foreach ( $pathArr as $key => $path ) {
             $class_file = $path . DIRECTORY_SEPARATOR . $className . ".php";
+            if (class_exists ( "SysLog" )) {
+                SysLog::debug ( "class_file", $class_file );
+            }
             if (is_file ( $class_file )) {
                 include_once ($class_file);
                 break;
