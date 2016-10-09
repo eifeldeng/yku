@@ -1,6 +1,6 @@
 <?php
 
-class testTcpServ extends Swoole\Network\Protocol\BaseServer
+class testTcpServ extends YkuServer\Network\Protocol\BaseServer
 {
 
     public function onReceive($server, $fd, $fromId, $data)

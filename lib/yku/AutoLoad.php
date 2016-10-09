@@ -49,6 +49,8 @@ class AutoLoad {
         }
         return $path;
     }
+    public static function loadThridParty($path) {
+    }
     private static function set_include_path($dir) {
         $arr = scandir ( $dir );
         $include_paths = array ();
@@ -66,4 +68,5 @@ spl_autoload_register ( array (
         'AutoLoad',
         'auto_load' 
 ) );
+
 ?>

@@ -3,14 +3,14 @@ class SysLog {
     
     // 默认全开
     public static $logLevel = array (
-            'debug' => 'debug',
-            'info' => 'info',
-            'notice' => 'notice',
-            'warning' => 'warning',
-            'error' => 'error',
-            'fatal' => 'fatal' 
+            'debug' => '1',
+            'info' => '1',
+            'notice' => '1',
+            'warning' => '1',
+            'error' => '1',
+            'fatal' => '1' 
     );
-    public static $defaultPermission = 0777;
+    private static $defaultPermission = 0777;
     
     // 默认log目录
     public static $logDir = '/tmp/log';
@@ -39,66 +39,38 @@ class SysLog {
      * @return boolean
      */
     private static function log($logName, $message, $logLevel) {
-        if (empty ( self::$logDir )) {
-            // 初始化，如果失败，返回
-            if (! self::init ()) {
-                return false;
-            }
-        }
-        
         if (empty ( self::$logLevel ) || ! in_array ( $logLevel, self::$logLevel )) {
             // 不在log等级内，返回
             return false;
         }
         
-        if (! isset ( $logName )) {
-            // 没有设置log名，返回
+        if (! isset ( $message )) {
             return false;
         }
         
         $dir = self::$logDir;
-        $dirArr = explode ( '/', trim ( $dir ) );
         $logFileName = "yku_" . date ( "Y-m-d" );
-        $tmpDir = '';
-        $faDir = '';
         
-        for($i = 1; $i < count ( $dirArr ); $i ++) {
-            $faDir .= '/' . $dirArr [$i - 1];
-            $tmpDir .= '/' . $dirArr [$i];
-            // 判断目录是否存在
-            if (! is_dir ( $tmpDir )) {
-                // 判断目录是否可写
-                if (! is_writeable ( $faDir )) {
-                    // 不可写
-                    return false;
-                }
-                // 创建目录
-                $res = mkdir ( $tmpDir, self::$defaultPermission, true );
-                if (! $res) {
-                    // 创建失败
-                    return false;
-                }
-            }
-        }
+        // swoole_async_write($dir . '/' . $logFileName . '.log', self::formatMessage ( $logLevel, $logName, $message ),-1);
         error_log ( self::formatMessage ( $logLevel, $logName, $message ), 3, $dir . '/' . $logFileName . '.log' );
         return true;
     }
-    public static function notice($logName, $message) {
+    public static function notice($logName, $message = "") {
         return self::log ( $logName, $message, 'notice' );
     }
-    public static function info($logName, $message) {
+    public static function info($logName, $message = "") {
         return self::log ( $logName, $message, 'info' );
     }
-    public static function warning($logName, $message) {
+    public static function warning($logName, $message = "") {
         return self::log ( $logName, $message, 'warning' );
     }
-    public static function error($logName, $message) {
+    public static function error($logName, $message = "") {
         return self::log ( $logName, $message, 'error' );
     }
-    public static function debug($logName, $message) {
+    public static function debug($logName, $message = "") {
         return self::log ( $logName, $message, 'debug' );
     }
-    public static function fatal($logName, $message) {
+    public static function fatal($logName, $message = "") {
         return self::log ( $logName, $message, 'fatal' );
     }
     
@@ -109,7 +81,6 @@ class SysLog {
      */
     public static function init($logInfo = null) {
         date_default_timezone_set ( 'PRC' );
-        
         if (empty ( $logInfo )) {
             return true;
         }
